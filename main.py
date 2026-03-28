@@ -1,41 +1,10 @@
-# SYNC_FINGERPRINT_v1_20260328_1712
-# ==========================================
-# 本次更新旨在通过【行号偏移】物理核查同步状态。
-# 如果日志中报错行号依然是 17，说明您的服务器加载的是旧版本代码。
-# 正常的路径初始化逻辑在此版本中已被下推至 40 行以后。
-# ==========================================
-# (SHIFT_LINE_8)
-# (SHIFT_LINE_9)
-# (SHIFT_LINE_10)
-# (SHIFT_LINE_11)
-# (SHIFT_LINE_12)
-# (SHIFT_LINE_13)
-# (SHIFT_LINE_14)
-# (SHIFT_LINE_15)
-# (SHIFT_LINE_16)
-# (SHIFT_LINE_17) - 此行现在是空注释，不应触发 TypeError
-# (SHIFT_LINE_18)
-# (SHIFT_LINE_19)
-# (SHIFT_LINE_20)
-# (SHIFT_LINE_21)
-# (SHIFT_LINE_22)
-# (SHIFT_LINE_23)
-# (SHIFT_LINE_24)
-# (SHIFT_LINE_25)
-# (SHIFT_LINE_26)
-# (SHIFT_LINE_27)
-# (SHIFT_LINE_28)
-# (SHIFT_LINE_29)
-# (SHIFT_LINE_30)
-# ==========================================
-
 from astrbot.api.star import Context, Star, register, StarTools
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api import logger
 from .utils.db import DeerPipeDB
 from .utils.render import DeerPipeRenderer
 from datetime import datetime
-import os
+import re
 
 @register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
@@ -69,9 +38,7 @@ class DeerPipePlugin(Star):
         # 移除自动重置逻辑，各榜单通过日期筛选实时生成
         pass
 
-    @filter.command("鹿")
-    async def sign_in(self, event: AstrMessageEvent):
-        '''个人签到'''
+    async def _run_sign_in(self, event: AstrMessageEvent):
         user_id = event.get_sender_id()
         user_name = event.get_sender_name()
         year, month, day, date_str, ym_str = self._get_now()
@@ -89,13 +56,29 @@ class DeerPipePlugin(Star):
         user = self.db.get_user(user_id)
         total_times = user["total_times"]
         
-        # Render image
         records = self.db.get_monthly_records(user_id, ym_str)
         preset = "1" if self.config.get("calendar_preset") == "鹿管" else "2"
         image_url = await self.renderer.render_calendar(self, user_name, year, month, records, preset=preset)
         
         yield event.image_result(image_url)
         yield event.plain_result(f"签到成功！你已经累计签到 {total_times} 次啦~")
+
+    @filter.command("鹿")
+    async def sign_in(self, event: AstrMessageEvent):
+        '''个人签到'''
+        async for ret in self._run_sign_in(event):
+            yield ret
+
+    @filter.regex(r"^\s*鹿\s*$")
+    async def sign_in_fallback(self, event: AstrMessageEvent):
+        if event.is_at_or_wake_command:
+            return
+        message = re.sub(r"\s+", " ", event.get_message_str().strip())
+        if not re.match(r"^鹿$", message):
+            return
+        async for ret in self._run_sign_in(event):
+            yield ret
+        event.stop_event()
 
     @filter.command("帮鹿")
     async def help_sign_in(self, event: AstrMessageEvent):
