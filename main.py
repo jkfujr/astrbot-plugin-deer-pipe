@@ -30,12 +30,12 @@
 # ==========================================
 
 from astrbot.api.star import Context, Star, register, StarTools
+from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api import logger
 from .utils.db import DeerPipeDB
 from .utils.render import DeerPipeRenderer
 from datetime import datetime
 import os
-import re
 
 @register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
