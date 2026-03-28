@@ -4,7 +4,10 @@ from astrbot.api import logger
 from .utils.db import DeerPipeDB
 from .utils.render import DeerPipeRenderer
 from datetime import datetime
-import re
+
+class _SingleLuFilter(filter.CustomFilter):
+    def filter(self, event: AstrMessageEvent, cfg) -> bool:
+        return (not event.is_at_or_wake_command) and event.get_message_str().strip() == "鹿"
 
 @register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
@@ -69,13 +72,9 @@ class DeerPipePlugin(Star):
         async for ret in self._run_sign_in(event):
             yield ret
 
-    @filter.regex(r"^\s*鹿\s*$")
+    @filter.event_message_type(filter.EventMessageType.ALL, desc="个人签到（无前缀单字鹿）")
+    @filter.custom_filter(_SingleLuFilter)
     async def sign_in_fallback(self, event: AstrMessageEvent):
-        if event.is_at_or_wake_command:
-            return
-        message = re.sub(r"\s+", " ", event.get_message_str().strip())
-        if not re.match(r"^鹿$", message):
-            return
         async for ret in self._run_sign_in(event):
             yield ret
         event.stop_event()

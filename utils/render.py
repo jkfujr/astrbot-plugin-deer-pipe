@@ -14,6 +14,24 @@ class DeerPipeRenderer:
         with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
 
+    def _calendar_render_options(self):
+        return {
+            "full_page": True,
+            "type": "png",
+            "scale": "css",
+            "viewport_width": 420
+        }
+
+    def _leaderboard_render_options(self, rank_count: int):
+        clip_height = min(max(260 + rank_count * 58, 420), 1600)
+        return {
+            "full_page": True,
+            "type": "png",
+            "scale": "css",
+            "viewport_width": 460,
+            "clip": {"x": 0, "y": 0, "width": 460, "height": clip_height}
+        }
+
     async def render_calendar(self, star, username: str, year: int, month: int, checkin_records: list, preset: str = "1"):
         # checkin_records: list of (date_str, count)
         # date_str: YYYY-MM-DD
@@ -96,7 +114,7 @@ class DeerPipeRenderer:
             "check_base64": check_base64
         }
         
-        return await star.html_render(tmpl, render_data)
+        return await star.html_render(tmpl, render_data, options=self._calendar_render_options())
 
     async def render_leaderboard(self, star, month_name: str, rank_data: list):
         # rank_data: list of Row(username, total_times)
@@ -130,4 +148,8 @@ class DeerPipeRenderer:
         </style>
         """
         
-        return await star.html_render(tmpl, {"month_name": month_name, "rank_data": rank_data})
+        return await star.html_render(
+            tmpl,
+            {"month_name": month_name, "rank_data": rank_data},
+            options=self._leaderboard_render_options(len(rank_data))
+        )
