@@ -11,13 +11,21 @@ import re
 
 @register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
-    def __init__(self, context: Context, config: dict = None):
+    def __init__(self, context, *args, **kwargs):
         super().__init__(context)
-        self.config = config or {}
-        self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
+        import os
+        # 兼容性获取 config，防止因位置参数缺失导致的 TypeError
+        self.config = kwargs.get('config') or (args[0] if args else {})
+        self.plugin_dir = str(os.path.dirname(os.path.abspath(__file__)))
         
-        # 严格使用 os.path.join 避免 TypeError
-        data_path = get_astrbot_data_path()
+        # 彻底规避 / 运算符与类型冲突
+        try:
+            from astrbot.core.utils.astrbot_path import get_astrbot_data_path
+            raw_data_path = get_astrbot_data_path()
+        except ImportError:
+            raw_data_path = "data"
+            
+        data_path = str(raw_data_path)
         db_dir = os.path.join(data_path, "plugin_data", "astrbot_plugin_deer_pipe")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir, exist_ok=True)
