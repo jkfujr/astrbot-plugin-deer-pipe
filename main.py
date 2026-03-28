@@ -13,10 +13,16 @@ import re
 class DeerPipePlugin(Star):
     def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
-        self.config = config if config else {}
-        self.plugin_dir = os.path.dirname(__file__)
-        db_dir = Path(get_astrbot_data_path()) / "plugin_data" / "astrbot_plugin_deer_pipe"
-        self.db = DeerPipeDB(str(db_dir / "deer_pipe.db"))
+        self.config = config or {}
+        self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # 严格使用 os.path.join 避免 TypeError
+        data_path = get_astrbot_data_path()
+        db_dir = os.path.join(data_path, "plugin_data", "astrbot_plugin_deer_pipe")
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+            
+        self.db = DeerPipeDB(os.path.join(db_dir, "deer_pipe.db"))
         self.renderer = DeerPipeRenderer(self.plugin_dir)
 
     def _get_now(self):
