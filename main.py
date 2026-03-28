@@ -65,8 +65,9 @@ class DeerPipePlugin(Star):
         total_times = user["total_times"]
         
         records = self.db.get_monthly_records(user_id, ym_str)
-        preset = "1" if self.config.get("calendar_preset") == "鹿管" else "2"
-        image_url = await self.renderer.render_calendar(self, user_name, year, month, records, preset=preset)
+        preset = "1" if self.config.get("calendar_preset", "鹿管") == "鹿管" else "2"
+        mark_preset = "1" if self.config.get("calendar_mark_preset", "红勾") == "红勾" else "2"
+        image_url = await self.renderer.render_calendar(self, user_name, year, month, records, preset=preset, mark_preset=mark_preset)
         
         yield event.image_result(image_url)
         yield event.plain_result(f"签到成功！你已经累计签到 {total_times} 次啦~")
@@ -157,14 +158,17 @@ class DeerPipePlugin(Star):
         
         # Parse AT
         target_id = None
+        target_name = None
         if event.message_obj and hasattr(event.message_obj, "message"):
             for msg in event.message_obj.message:
                 if not hasattr(msg, "type"):
                     continue
                 if msg.type.lower() == 'at':
                     target_id = getattr(msg, "target", None) or getattr(msg, "qq", None)
+                    target_name = getattr(msg, "name", None)
                     if not target_id and hasattr(msg, "data"):
                         target_id = msg.data.get('qq') or msg.data.get('target') or msg.data.get('id')
+                        target_name = target_name or msg.data.get('name') or msg.data.get('display')
                     if target_id:
                         target_id = str(target_id)
                         break
@@ -187,21 +191,22 @@ class DeerPipePlugin(Star):
         # Target gets the sign-in
         self.db.add_checkin(target_id, date_str)
         self.db.add_helper_record(helper_id, date_str) # Helper record
-        # We don't have the target's name easily if they haven't signed in before, 
-        # but AstrBot might provide it if we fetch user info. 
-        # For now, let's just use "一位神秘人" if name unavailable.
-        target_name = "一位神秘人"
-        # Try to get name from user record
-        target_user = self.db.get_user(target_id)
-        if target_user:
-            target_name = target_user["username"]
+        
+        # Determine target name
+        if not target_name:
+            target_name = "一位神秘人"
+            # Try to get name from user record
+            target_user = self.db.get_user(target_id)
+            if target_user:
+                target_name = target_user["username"]
             
         self.db.update_user(target_id, target_name, total_delta=1, reset_month=ym_str)
-        
+
         records = self.db.get_monthly_records(target_id, ym_str)
-        preset = "1" if self.config.get("calendar_preset") == "鹿管" else "2"
-        image_url = await self.renderer.render_calendar(self, target_name, year, month, records, preset=preset)
-        
+        preset = "1" if self.config.get("calendar_preset", "鹿管") == "鹿管" else "2"
+        mark_preset = "1" if self.config.get("calendar_mark_preset", "红勾") == "红勾" else "2"
+        image_url = await self.renderer.render_calendar(self, target_name, year, month, records, preset=preset, mark_preset=mark_preset)
+
         yield event.image_result(image_url)
         yield event.plain_result(f"成功帮助 {target_name} 签到！")
 
@@ -230,8 +235,9 @@ class DeerPipePlugin(Star):
             return
             
         records = self.db.get_monthly_records(target_id, ym_str)
-        preset = "1" if self.config.get("calendar_preset") == "鹿管" else "2"
-        image_url = await self.renderer.render_calendar(self, user["username"], year, month, records, preset=preset)
+        preset = "1" if self.config.get("calendar_preset", "鹿管") == "鹿管" else "2"
+        mark_preset = "1" if self.config.get("calendar_mark_preset", "红勾") == "红勾" else "2"
+        image_url = await self.renderer.render_calendar(self, user["username"], year, month, records, preset=preset, mark_preset=mark_preset)
         yield event.image_result(image_url)
 
     @filter.command("补鹿", alias={"补🦌"})

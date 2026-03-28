@@ -17,5 +17,12 @@
     "options": ["鹿管", "心奈"],
     "default": "鹿管",
     "hint": "选择签到日历图的背景风格"
+  },
+  "calendar_mark_preset": {
+    "description": "日历签到印章预设",
+    "type": "string",
+    "options": ["红勾", "100分盖章"],
+    "default": "红勾",
+    "hint": "选择日历上签到成功显示的印章预设"
   }
 }

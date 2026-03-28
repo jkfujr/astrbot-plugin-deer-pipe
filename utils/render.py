@@ -33,13 +33,18 @@ class DeerPipeRenderer:
             "clip": {"x": 0, "y": 0, "width": 460, "height": clip_height}
         }
 
-    async def render_calendar(self, star, username: str, year: int, month: int, checkin_records: list, preset: str = "1"):
+    async def render_calendar(self, star, username: str, year: int, month: int, checkin_records: list, preset: str = "1", mark_preset: str = "1"):
         # checkin_records: list of (date_str, count)
         # date_str: YYYY-MM-DD
         
         # Get assets
         bg_path = os.path.join(self.assets_dir, preset, "1.png")
-        check_path = os.path.join(self.assets_dir, preset, "2.png")
+        if not os.path.exists(bg_path):
+            bg_path = os.path.join(self.assets_dir, "1", "1.png")
+            
+        check_path = os.path.join(self.assets_dir, mark_preset, "2.png")
+        if not os.path.exists(check_path):
+            check_path = os.path.join(self.assets_dir, "1", "2.png")
         
         bg_base64 = self._get_image_base64(bg_path)
         check_base64 = self._get_image_base64(check_path)
