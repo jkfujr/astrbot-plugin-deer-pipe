@@ -80,7 +80,15 @@ class DeerPipePlugin(Star):
 
     @filter.command("鹿", alias={"🦌"})
     async def sign_in(self, event: AstrMessageEvent):
-        '''个人签到'''
+        '''个人签到或帮鹿。用法: /鹿 [@用户]'''
+        # 检查是否带有 @，如果有则转发给帮鹿
+        if event.message_obj and hasattr(event.message_obj, "message"):
+            for msg in event.message_obj.message:
+                if getattr(msg, "type", "").lower() == 'at':
+                    async for ret in self.help_sign_in(event):
+                        yield ret
+                    return
+        
         async for ret in self._run_sign_in(event):
             yield ret
 
@@ -89,9 +97,22 @@ class DeerPipePlugin(Star):
     async def no_prefix_dispatch(self, event: AstrMessageEvent):
         '''无前缀鹿系指令兼容入口'''
         msg = " ".join(event.get_message_str().strip().split())
+        
+        # Check if it has an At mention for potential dispatch to help_sign_in
+        has_at = False
+        if event.message_obj and hasattr(event.message_obj, "message"):
+            for m in event.message_obj.message:
+                if getattr(m, "type", "").lower() == 'at':
+                    has_at = True
+                    break
+
         if msg in ("鹿", "🦌"):
-            async for ret in self._run_sign_in(event):
-                yield ret
+            if has_at:
+                async for ret in self.help_sign_in(event):
+                    yield ret
+            else:
+                async for ret in self._run_sign_in(event):
+                    yield ret
             event.stop_event()
             return
 
