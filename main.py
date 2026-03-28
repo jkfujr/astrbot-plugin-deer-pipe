@@ -1,36 +1,32 @@
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star, register, StarTools
 from astrbot.api import logger
-from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 from .utils.db import DeerPipeDB
 from .utils.render import DeerPipeRenderer
 from datetime import datetime
-from pathlib import Path
 import os
 import re
 
 @register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
-    def __init__(self, context, *args, **kwargs):
+    def __init__(self, context: Context):
         super().__init__(context)
         import os
-        # 兼容性获取 config，防止因位置参数缺失导致的 TypeError
-        self.config = kwargs.get('config') or (args[0] if args else {})
+        if not hasattr(self, 'config') or not self.config:
+            self.config = self.context.get_config("astrbot_plugin_deer_pipe") or {}
+            
         self.plugin_dir = str(os.path.dirname(os.path.abspath(__file__)))
         
-        # 彻底规避 / 运算符与类型冲突
         try:
+            data_dir = str(StarTools.get_data_dir())
+        except Exception:
+            # 兜底逻辑
             from astrbot.core.utils.astrbot_path import get_astrbot_data_path
-            raw_data_path = get_astrbot_data_path()
-        except ImportError:
-            raw_data_path = "data"
+            data_dir = os.path.join(get_astrbot_data_path(), "plugin_data", "astrbot_plugin_deer_pipe")
             
-        data_path = str(raw_data_path)
-        db_dir = os.path.join(data_path, "plugin_data", "astrbot_plugin_deer_pipe")
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir, exist_ok=True)
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir, exist_ok=True)
             
-        self.db = DeerPipeDB(os.path.join(db_dir, "deer_pipe.db"))
+        self.db = DeerPipeDB(os.path.join(data_dir, "deer_pipe.db"))
         self.renderer = DeerPipeRenderer(self.plugin_dir)
 
     def _get_now(self):
