@@ -5,16 +5,17 @@ from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 from .utils.db import DeerPipeDB
 from .utils.render import DeerPipeRenderer
 from datetime import datetime
+from pathlib import Path
 import os
 import re
 
-@register("astrbot_plugin_deer_pipe", "Antigravity", "鹿管签到精简版", "1.0.0", "https://github.com/Antigravity/astrbot-plugin-deer-pipe")
+@register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
-    def __init__(self, context: Context, config: dict):
+    def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
-        self.config = config
+        self.config = config if config else {}
         self.plugin_dir = os.path.dirname(__file__)
-        db_dir = get_astrbot_data_path() / "plugin_data" / "astrbot_plugin_deer_pipe"
+        db_dir = Path(get_astrbot_data_path()) / "plugin_data" / "astrbot_plugin_deer_pipe"
         self.db = DeerPipeDB(str(db_dir / "deer_pipe.db"))
         self.renderer = DeerPipeRenderer(self.plugin_dir)
 
