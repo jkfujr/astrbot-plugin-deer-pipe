@@ -5,17 +5,22 @@ from .utils.db import DeerPipeDB
 from .utils.render import DeerPipeRenderer
 from datetime import datetime
 
-class _SingleLuFilter(filter.CustomFilter):
+class _NoPrefixDeerCmdFilter(filter.CustomFilter):
     def filter(self, event: AstrMessageEvent, cfg) -> bool:
-        return (not event.is_at_or_wake_command) and event.get_message_str().strip() == "鹿"
+        if event.is_at_or_wake_command:
+            return False
+        msg = " ".join(event.get_message_str().strip().split())
+        return (
+            msg in ("鹿", "🦌")
+            or msg.startswith(("帮鹿", "帮🦌", "看鹿", "看🦌", "补鹿", "补🦌", "戒鹿", "戒🦌", "寸止", "鹿榜", "🦌榜"))
+        )
 
 @register("astrbot_plugin_deer_pipe", "jkfujr", "鹿管签到插件。支持个人签到、帮签、补签及日历图。", "0.0.1", "https://github.com/jkfujr/astrbot-plugin-deer-pipe")
 class DeerPipePlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
         import os
-        # [FINGERPRINT_INIT_START]
-        self.config = getattr(self, "config", None) or self.context.get_config("astrbot_plugin_deer_pipe") or {}
+        self.config = config or {}
             
         base_dir = os.path.dirname(os.path.abspath(__file__))
         self.plugin_dir = str(base_dir)
@@ -47,7 +52,7 @@ class DeerPipePlugin(Star):
         year, month, day, date_str, ym_str = self._get_now()
         
         current_count = self.db.get_checkin(user_id, date_str)
-        max_times = self.config.get("maximum_times_per_day", 3)
+        max_times = self._get_max_times()
         
         if max_times != -1 and current_count >= max_times:
             yield event.plain_result(f"今天已经签到过 {current_count} 次了，请明天再来吧~")
@@ -66,20 +71,85 @@ class DeerPipePlugin(Star):
         yield event.image_result(image_url)
         yield event.plain_result(f"签到成功！你已经累计签到 {total_times} 次啦~")
 
-    @filter.command("鹿")
+    def _get_max_times(self):
+        try:
+            return int(self.config.get("maximum_times_per_day", 3))
+        except Exception:
+            return 3
+
+    @filter.command("鹿", alias={"🦌"})
     async def sign_in(self, event: AstrMessageEvent):
         '''个人签到'''
         async for ret in self._run_sign_in(event):
             yield ret
 
-    @filter.event_message_type(filter.EventMessageType.ALL, desc="个人签到（无前缀单字鹿）")
-    @filter.custom_filter(_SingleLuFilter)
-    async def sign_in_fallback(self, event: AstrMessageEvent):
-        async for ret in self._run_sign_in(event):
-            yield ret
-        event.stop_event()
+    @filter.event_message_type(filter.EventMessageType.ALL, desc="无前缀鹿系指令兼容")
+    @filter.custom_filter(_NoPrefixDeerCmdFilter)
+    async def no_prefix_dispatch(self, event: AstrMessageEvent):
+        '''无前缀鹿系指令兼容入口'''
+        msg = " ".join(event.get_message_str().strip().split())
+        if msg in ("鹿", "🦌"):
+            async for ret in self._run_sign_in(event):
+                yield ret
+            event.stop_event()
+            return
 
-    @filter.command("帮鹿")
+        if msg.startswith(("帮鹿", "帮🦌")):
+            async for ret in self.help_sign_in(event):
+                yield ret
+            event.stop_event()
+            return
+
+        if msg.startswith(("看鹿", "看🦌")):
+            async for ret in self.view_calendar(event):
+                yield ret
+            event.stop_event()
+            return
+
+        if msg.startswith(("补鹿", "补🦌")):
+            rest = msg[2:].strip()
+            if not rest.isdigit():
+                yield event.plain_result("补签需要填写日期号，例如：补鹿 18")
+                event.stop_event()
+                return
+            async for ret in self.re_sign_in(event, int(rest)):
+                yield ret
+            event.stop_event()
+            return
+
+        if msg.startswith(("戒鹿", "戒🦌")):
+            rest = msg[2:].strip()
+            if rest and not rest.isdigit():
+                yield event.plain_result("取消签到日期格式不正确，例如：戒鹿 18")
+                event.stop_event()
+                return
+            day = int(rest) if rest else None
+            async for ret in self.cancel_sign_in(event, day):
+                yield ret
+            event.stop_event()
+            return
+
+        if msg.startswith("寸止"):
+            rest = msg[2:].strip()
+            if rest and not rest.isdigit():
+                yield event.plain_result("取消签到日期格式不正确，例如：寸止 18")
+                event.stop_event()
+                return
+            day = int(rest) if rest else None
+            async for ret in self.cancel_sign_in(event, day):
+                yield ret
+            event.stop_event()
+            return
+
+        if msg.startswith(("鹿榜", "🦌榜")):
+            rest = msg[2:].strip()
+            scope = rest.split(" ")[0] if rest else ""
+            async for ret in self.leaderboard(event, scope):
+                yield ret
+            event.stop_event()
+            return
+
+    @filter.command("帮鹿", alias={"帮🦌"})
     async def help_sign_in(self, event: AstrMessageEvent):
         '''帮助他人签到。用法: /帮鹿 @用户'''
         helper_id = event.get_sender_id()
@@ -101,7 +171,7 @@ class DeerPipePlugin(Star):
         # Check helper limit
         
         current_count = self.db.get_checkin(target_id, date_str)
-        max_times = self.config.get("maximum_times_per_day", 3)
+        max_times = self._get_max_times()
         
         if max_times != -1 and current_count >= max_times:
             yield event.plain_result(f"目标用户今天已经签到达上限 {max_times} 次了。")
@@ -128,7 +198,7 @@ class DeerPipePlugin(Star):
         yield event.image_result(image_url)
         yield event.plain_result(f"成功帮助 {target_name} 签到！")
 
-    @filter.command("看鹿")
+    @filter.command("看鹿", alias={"看🦌"})
     async def view_calendar(self, event: AstrMessageEvent):
         '''查看签到日历。用法: /看鹿 [@用户]'''
         target_id = event.get_sender_id()
@@ -150,7 +220,7 @@ class DeerPipePlugin(Star):
         image_url = await self.renderer.render_calendar(self, user["username"], year, month, records, preset=preset)
         yield event.image_result(image_url)
 
-    @filter.command("补鹿")
+    @filter.command("补鹿", alias={"补🦌"})
     async def re_sign_in(self, event: AstrMessageEvent, day: int):
         '''补签本月某天。用法: /补鹿 [日期号]'''
         user_id = event.get_sender_id()
@@ -164,7 +234,7 @@ class DeerPipePlugin(Star):
         target_date = f"{year}-{month:02d}-{day:02d}"
         
         current_count = self.db.get_checkin(user_id, target_date)
-        max_times = self.config.get("maximum_times_per_day", 3)
+        max_times = self._get_max_times()
         
         if max_times != -1 and current_count >= max_times:
             yield event.plain_result(f"{day}号的签到次数已经达上限(上限 {max_times} 次)啦。")
@@ -175,7 +245,7 @@ class DeerPipePlugin(Star):
         
         yield event.plain_result(f"成功补签 {day} 号！免费福利哦~")
 
-    @filter.command("戒鹿")
+    @filter.command("戒鹿", alias={"戒🦌", "寸止"})
     async def cancel_sign_in(self, event: AstrMessageEvent, day: int = None):
         '''取消某天的签到。用法: /戒鹿 [日期号] (省略则取消今天)'''
         user_id = event.get_sender_id()
@@ -202,7 +272,7 @@ class DeerPipePlugin(Star):
         
         yield event.plain_result(f"已取消 {target_day} 号的签到记录。")
 
-    @filter.command("鹿榜")
+    @filter.command("鹿榜", alias={"🦌榜"})
     async def leaderboard(self, event: AstrMessageEvent, scope: str = ""):
         '''查看签到排行榜。用法: /鹿榜 [年|总] (省略参数则查看本月)'''
         year, month, day, date_str, ym_str = self._get_now()
