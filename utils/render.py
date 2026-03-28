@@ -72,6 +72,8 @@ class DeerPipeRenderer:
             </div>
         </div>
         <style>
+            html, body { margin: 0; padding: 0; width: fit-content; height: fit-content; background: transparent; }
+            body { display: inline-block; }
             .calendar { width: 320px; background: white; padding: 15px; border-radius: 10px; font-family: "Microsoft YaHei", sans-serif; }
             .calendar-header { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #333; }
             .calendar-subheader { font-size: 14px; color: #666; margin-bottom: 15px; }
@@ -116,6 +118,8 @@ class DeerPipeRenderer:
             </div>
         </div>
         <style>
+            html, body { margin: 0; padding: 0; width: fit-content; height: fit-content; background: transparent; }
+            body { display: inline-block; }
             .leaderboard { width: 350px; background: #fff; padding: 25px; border-radius: 12px; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
             h1 { text-align: center; color: #2c3e50; font-size: 22px; margin-bottom: 25px; }
             .item { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid #eee; }
