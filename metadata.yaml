@@ -1,0 +1,6 @@
+name: astrbot_plugin_deer_pipe
+display_name: 鹿管签到 (Deer Pipe)
+desc: 鹿管签到插件。支持个人签到、帮签、补签及日历图。
+version: 0.0.1
+author: jkfujr
+repo: https://github.com/jkfujr/astrbot-plugin-deer-pipe

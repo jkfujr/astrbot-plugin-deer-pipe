@@ -1,0 +1,21 @@
+{
+  "maximum_times_per_day": {
+    "description": "每日签到次数上限",
+    "type": "int",
+    "default": 3,
+    "hint": "同一用户每天最多可以签到的次数，-1 为不限制"
+  },
+  "maximum_helpsignin_times_per_day": {
+    "description": "每日帮他人签到次数上限",
+    "type": "int",
+    "default": 5,
+    "hint": "每天最多可以帮多少个不同的用户签到，-1 为不限制"
+  },
+  "calendar_preset": {
+    "description": "日历背景预设",
+    "type": "string",
+    "options": ["鹿管", "心奈"],
+    "default": "鹿管",
+    "hint": "选择签到日历图的背景风格"
+  }
+}
