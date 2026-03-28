@@ -157,10 +157,17 @@ class DeerPipePlugin(Star):
         
         # Parse AT
         target_id = None
-        for msg in event.message_obj.message:
-            if msg.type == 'at':
-                target_id = msg.data.get('qq') or msg.data.get('id')
-                break
+        if event.message_obj and hasattr(event.message_obj, "message"):
+            for msg in event.message_obj.message:
+                if not hasattr(msg, "type"):
+                    continue
+                if msg.type.lower() == 'at':
+                    target_id = getattr(msg, "target", None) or getattr(msg, "qq", None)
+                    if not target_id and hasattr(msg, "data"):
+                        target_id = msg.data.get('qq') or msg.data.get('target') or msg.data.get('id')
+                    if target_id:
+                        target_id = str(target_id)
+                        break
         
         if not target_id:
             yield event.plain_result("请艾特指定用户。示例：/帮鹿 @用户")
@@ -204,10 +211,17 @@ class DeerPipePlugin(Star):
         target_id = event.get_sender_id()
         target_name = event.get_sender_name()
         
-        for msg in event.message_obj.message:
-            if msg.type == 'at':
-                target_id = msg.data.get('qq') or msg.data.get('id')
-                break
+        if event.message_obj and hasattr(event.message_obj, "message"):
+            for msg in event.message_obj.message:
+                if not hasattr(msg, "type"):
+                    continue
+                if msg.type.lower() == 'at':
+                    tid = getattr(msg, "target", None) or getattr(msg, "qq", None)
+                    if not tid and hasattr(msg, "data"):
+                        tid = msg.data.get('qq') or msg.data.get('target') or msg.data.get('id')
+                    if tid:
+                        target_id = str(tid)
+                        break
         
         year, month, day, date_str, ym_str = self._get_now()
         user = self.db.get_user(target_id)

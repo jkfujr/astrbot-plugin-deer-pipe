@@ -16,10 +16,11 @@ class DeerPipeRenderer:
 
     def _calendar_render_options(self):
         return {
-            "full_page": True,
+            "full_page": False,
             "type": "png",
             "scale": "css",
-            "viewport_width": 420
+            "viewport_width": 640,
+            "clip": {"x": 0, "y": 0, "width": 640, "height": 606}
         }
 
     def _leaderboard_render_options(self, rank_count: int):
@@ -90,18 +91,18 @@ class DeerPipeRenderer:
             </div>
         </div>
         <style>
-            html, body { margin: 0; padding: 0; width: fit-content; height: fit-content; background: transparent; }
-            body { display: inline-block; }
-            .calendar { width: 320px; background: white; padding: 15px; border-radius: 10px; font-family: "Microsoft YaHei", sans-serif; }
-            .calendar-header { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #333; }
-            .calendar-subheader { font-size: 14px; color: #666; margin-bottom: 15px; }
-            .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; color: #999; margin-bottom: 10px; }
-            .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-            .calendar-day { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-            .deer-image { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+            html, body { margin: 0; padding: 0; width: 640px; height: 606px; background: transparent; overflow: hidden; }
+            body { display: block; }
+            .calendar { width: 640px; height: 606px; box-sizing: border-box; background: white; padding: 25px; border-radius: 10px; font-family: "Microsoft YaHei", sans-serif; }
+            .calendar-header { font-size: 32px; font-weight: bold; margin-bottom: 10px; color: #333; }
+            .calendar-subheader { font-size: 20px; color: #666; margin-bottom: 25px; }
+            .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 18px; color: #999; margin-bottom: 15px; }
+            .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+            .calendar-day { position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+            .deer-image { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
             .check-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
-            .day-number { position: absolute; bottom: 2px; left: 4px; font-size: 12px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px white; }
-            .multiple-sign { position: absolute; top: 2px; right: 2px; font-size: 10px; font-weight: bold; color: #ff4d4f; background: rgba(255,255,255,0.8); border-radius: 2px; padding: 0 2px; }
+            .day-number { position: absolute; bottom: 4px; left: 6px; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px white; }
+            .multiple-sign { position: absolute; top: 4px; right: 4px; font-size: 14px; font-weight: bold; color: #ff4d4f; background: rgba(255,255,255,0.8); border-radius: 4px; padding: 2px 4px; }
         </style>
         """
         
