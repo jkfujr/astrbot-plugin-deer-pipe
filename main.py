@@ -1,3 +1,34 @@
+# SYNC_FINGERPRINT_v1_20260328_1712
+# ==========================================
+# 本次更新旨在通过【行号偏移】物理核查同步状态。
+# 如果日志中报错行号依然是 17，说明您的服务器加载的是旧版本代码。
+# 正常的路径初始化逻辑在此版本中已被下推至 40 行以后。
+# ==========================================
+# (SHIFT_LINE_8)
+# (SHIFT_LINE_9)
+# (SHIFT_LINE_10)
+# (SHIFT_LINE_11)
+# (SHIFT_LINE_12)
+# (SHIFT_LINE_13)
+# (SHIFT_LINE_14)
+# (SHIFT_LINE_15)
+# (SHIFT_LINE_16)
+# (SHIFT_LINE_17) - 此行现在是空注释，不应触发 TypeError
+# (SHIFT_LINE_18)
+# (SHIFT_LINE_19)
+# (SHIFT_LINE_20)
+# (SHIFT_LINE_21)
+# (SHIFT_LINE_22)
+# (SHIFT_LINE_23)
+# (SHIFT_LINE_24)
+# (SHIFT_LINE_25)
+# (SHIFT_LINE_26)
+# (SHIFT_LINE_27)
+# (SHIFT_LINE_28)
+# (SHIFT_LINE_29)
+# (SHIFT_LINE_30)
+# ==========================================
+
 from astrbot.api.star import Context, Star, register, StarTools
 from astrbot.api import logger
 from .utils.db import DeerPipeDB
@@ -11,10 +42,11 @@ class DeerPipePlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         import os
-        if not hasattr(self, 'config') or not self.config:
-            self.config = self.context.get_config("astrbot_plugin_deer_pipe") or {}
+        # [FINGERPRINT_INIT_START]
+        self.config = getattr(self, "config", None) or self.context.get_config("astrbot_plugin_deer_pipe") or {}
             
-        self.plugin_dir = str(os.path.dirname(os.path.abspath(__file__)))
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.plugin_dir = str(base_dir)
         
         try:
             data_dir = str(StarTools.get_data_dir())
